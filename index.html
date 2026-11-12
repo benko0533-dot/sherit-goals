@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1F3A5F">
+<title>יעדים 2027 – שארית ישראל</title>
+<style>
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#F3F5F9;color:#12212E;
+       display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center}
+  .box{padding:24px}
+  .t{font-size:20px;font-weight:700;color:#1F3A5F;margin-bottom:10px}
+  .s{font-size:15px;color:#3A4655}
+  button{margin-top:16px;padding:10px 22px;font-size:15px;border:0;border-radius:8px;background:#2E7D32;color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="box" id="ld">
+  <div class="t">שארית ישראל · יעדים 2027</div>
+  <div class="s">טוען…</div>
+</div>
+<script>
+/*
+ * האתר הזה הוא רק "מעטפת": קוד המסך והנתונים נשארים ב-Google Apps Script.
+ * 1. מושכים את קוד המסך מהשרת (?src=1).
+ * 2. מחליפים את google.script.run בקריאות fetch לשרת (doPost).
+ * כך כל עדכון למסך נעשה רק ב-Apps Script, ואין צורך לעדכן את האתר הזה.
+ */
+var API = 'https://script.google.com/macros/s/AKfycbzYpGcCvaaXAjkrFUygCW0TWclhSporroXgkk8LEjKqNRMkIsAkDgqHKKIXbpLjjN_qRQ/exec';
+
+function installShim(api) {
+  function runner(ok, fail) {
+    return new Proxy({}, {
+      get: function (_, name) {
+        if (name === 'withSuccessHandler') return function (f) { return runner(f, fail); };
+        if (name === 'withFailureHandler') return function (f) { return runner(ok, f); };
+        if (name === 'withUserObject') return function () { return runner(ok, fail); };
+        return function () {
+          var args = Array.prototype.slice.call(arguments);
+          fetch(api, { method: 'POST', body: JSON.stringify({ fn: String(name), args: args }) })
+            .then(function (r) {
+              if (!r.ok) throw new Error('תקלת תקשורת עם השרת (' + r.status + '). נסה שוב.');
+              return r.json();
+            })
+            .then(function (j) {
+              if (j && j.ok) { if (ok) ok(j.r); }
+              else if (fail) fail(new Error((j && j.e) || 'שגיאה'));
+            })
+            .catch(function (e) {
+              if (fail) fail(new Error((e && e.message && e.message.indexOf('תקלת') === 0) ? e.message : 'אין חיבור לשרת. בדוק את האינטרנט ונסה שוב.'));
+            });
+        };
+      }
+    });
+  }
+  window.google = { script: { run: runner(null, null) } };
+}
+
+function showError() {
+  document.getElementById('ld').innerHTML =
+    '<div class="t">לא הצלחנו לטעון את המערכת</div>' +
+    '<div class="s">בדוק את החיבור לאינטרנט ונסה שוב.</div>' +
+    '<button type="button" onclick="location.reload()">נסה שוב</button>';
+}
+
+fetch(API + '?src=1')
+  .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .then(function (html) {
+    if (html.indexOf('<html') < 0) throw new Error('bad');
+    var shim = '<script>(' + installShim.toString() + ')(' + JSON.stringify(API) + ');<\/script>';
+    var head = '<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">' +
+               '<title>יעדים 2027 – שארית ישראל</title>' + shim;
+    html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (m) { return m + head; }) : head + html;
+    document.open();
+    document.write(html);
+    document.close();
+  })
+  .catch(showError);
+</script>
+</body>
+</html>
